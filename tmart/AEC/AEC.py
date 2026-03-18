@@ -103,6 +103,7 @@ def AEC(AEC_band_name, AEC_band_6S, wl, AOT, metadata, config, anci, mask_cloud,
     
     # Smoothing the edges 
     if reshape_factor_tmp>1 and not hp_AE_land:
+        #  mask_all is True for pixels identified as non-water (land, clouds, high reflectance) and False for water.
         image_water = np.where(mask_all[str(res_band) + 'm'], np.nan, image)
         
         # Suppress warning of mean of empty slice 

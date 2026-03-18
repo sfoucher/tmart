@@ -43,12 +43,13 @@ def run_regular(file, username, password, AOT, AOT_offset, n_photon, AEC_record,
     print('\nComputing masks: ')
     mask_cloud = tmart.AEC.compute_masks(metadata, config, 'cloud')
     mask_all   = tmart.AEC.compute_masks(metadata, config, 'all')   
+    temp= mask_all['10m']
     print('Done')
     
     # plot water-extent preview
-    if not config['AE_land']=='True':
-        print('\nPlotting water-extent preview...')
-        tmart.AEC.plot_water_extent(metadata, config, mask_all)
+    #if not config['AE_land']=='True':
+    #    print('\nPlotting water-extent preview...')
+    #    tmart.AEC.plot_water_extent(metadata, config, mask_all)
         
     # AOT
     if AOT == 'NIR':
