@@ -17,10 +17,12 @@ def read_metadata_S2(file,config,sensor):
     import mgrs
     import Py6S, math
     
-    # search metadata xml file
+    # search metadata xml file (L1C or L2A)
     for root, dirs, files in os.walk(file):
         if "MTD_MSIL1C.xml" in files:
             xml_file = os.path.join(root, "MTD_MSIL1C.xml")
+        elif "MTD_MSIL2A.xml" in files:
+            xml_file = os.path.join(root, "MTD_MSIL2A.xml")
     
     file = os.path.dirname(xml_file)
     files = os.listdir(file)
