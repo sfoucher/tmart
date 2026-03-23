@@ -9,7 +9,7 @@
 
 # Run on Landsat and Sentinel series 
 
-def run_regular(file, username, password, AOT, AOT_offset, n_photon, AEC_record, basename, njobs, mask_SWIR_threshold, atm_info_file=None): 
+def run_regular(file, username, password, AOT, AOT_offset, n_photon, AEC_record, basename, njobs, mask_SWIR_threshold, atm_info_file=None, bAEC= True): 
  
     import tmart
     import sys, os
@@ -78,7 +78,10 @@ def run_regular(file, username, password, AOT, AOT_offset, n_photon, AEC_record,
         AEC_band_6S = metadata['AEC_bands_6S'][i]
         wl = metadata['AEC_bands_wl'][i]
         print('\n============= AEC: {} ==================='.format(AEC_band_name))
-        tmart.AEC.AEC(AEC_band_name, AEC_band_6S, wl, AOT, metadata, config, anci, mask_cloud, mask_all, n_photon, njobs)
+        if bAEC:
+            tmart.AEC.AEC(AEC_band_name, AEC_band_6S, wl, AOT, metadata, config, anci, mask_cloud, mask_all, n_photon, njobs)
+        else:
+            tmart.AEC.AEA(AEC_band_name, AEC_band_6S, wl, AOT, metadata, config, anci, mask_cloud, mask_all, n_photon, njobs)
         file_AEC_record.write(str(AEC_band_name) + '\n')
         file_AEC_record.flush()
         

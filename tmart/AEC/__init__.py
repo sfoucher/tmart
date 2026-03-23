@@ -8,6 +8,7 @@
 # (at your option) any later version.
 
 from .AEC import *
+from .AEA import *
 from .anci_download import *
 from .anci_get_AER import *
 from .anci_get_OWV import *

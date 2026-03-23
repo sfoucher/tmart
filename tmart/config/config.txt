@@ -36,7 +36,7 @@ L8_SWIR_band = B6
 # Larger value: faster processing, lower accuracy and creating pixel artifacts on the output image
 # S2 options: 2, 6, 12, 18, 24; L8 options: any
 
-reshape_factor_S2 = 18
+reshape_factor_S2 = 6
 reshape_factor_L8 = 12
 
 

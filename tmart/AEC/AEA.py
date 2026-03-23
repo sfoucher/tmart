@@ -8,9 +8,9 @@
 # (at your option) any later version.
 
 
-# AEC for a single wavelength or band 
+# AEA for a single wavelength or band 
 
-def AEC(AEC_band_name, AEC_band_6S, wl, AOT, metadata, config, anci, mask_cloud, mask_all, n_photon, njobs):
+def AEA(AEC_band_name, AEC_band_6S, wl, AOT, metadata, config, anci, mask_cloud, mask_all, n_photon, njobs):
     
     import tmart
     import rasterio, sys, time, gc
@@ -63,9 +63,7 @@ def AEC(AEC_band_name, AEC_band_6S, wl, AOT, metadata, config, anci, mask_cloud,
     # Reshape_factor specific to this resolution 
     reshape_factor_tmp = int(metadata['reshape_factor'] * metadata['resolution']/res_band)
     
-    # Reshape on a block-by-block basis, and take the mean of each block to get the AEC image at the AEC resolution
-    image_AEC = image.reshape([height_reshaped, reshape_factor_tmp, 
-                               width_reshaped, reshape_factor_tmp]).mean(3).mean(1)
+    
 
     # Calculate AEC parameters 
     AEC_parameters = tmart.AEC.get_parameters(n_photon = n_photon, SR = np.nanmedian(image), wl = wl, band = AEC_band_6S, 
@@ -80,8 +78,27 @@ def AEC(AEC_band_name, AEC_band_6S, wl, AOT, metadata, config, anci, mask_cloud,
     F_captured      = AEC_parameters['F_captured']
     R_atm           = AEC_parameters['R_atm']
 
+    # remove AE from TOA reflectance 
+    temp_SR = image - R_atm
+    
+    # Correcting for non-linearity of the ratio of environmental irradiance to surface reflectance for homogeneous Lambertian surfaces
+    # This is implemented for water only
+    # Input has to include land, because the function uses the env irradiance of the average reflectance across the scene
+    print("\nIrradiance correction: ")
+    image = tmart.AEC.irradiance_correction(image = temp_SR, wl_RC = wl/1000, band = AEC_band_6S,
+                                                    tm_vza = metadata['vza'], tm_vaa = metadata['vaa'], 
+                                                    tm_sza = metadata['sza'], tm_saa = metadata['saa'],
+                                                    atm_profile = anci, 
+                                                    aerosol_type = anci['r_maritime'], aot550 = AOT,
+                                                    inv = True)
+    del temp_SR
+    gc.collect()
+    # Reshape on a block-by-block basis, and take the mean of each block to get the AEC image at the AEC resolution
+    image_R_surf = image.reshape([height_reshaped, reshape_factor_tmp, 
+                               width_reshaped, reshape_factor_tmp]).mean(3).mean(1)
+    
     # image_R_surf: reshaped 
-    image_R_surf = image_AEC - R_atm
+    #image_R_surf = image_AEC - R_atm
     print('\nNumber of negative R_surf pixels: ' + str(np.sum(image_R_surf < 0)) + '/' + str(height_reshaped * width_reshaped))
     
     # Turn negative to 0
@@ -115,7 +132,7 @@ def AEC(AEC_band_name, AEC_band_6S, wl, AOT, metadata, config, anci, mask_cloud,
             image_water_AEC = np.nanmean(image_water_AEC,1)
     
         # with non-water as nan 
-        image_water_R_surf = image_water_AEC - R_atm
+        image_water_R_surf = image_water_AEC #- R_atm
         
         # Edit image_R_surf: where there's water image_R_surf, keep it, where there's nan, use original image_R_surf
         # image_R_surf can only be edited after convolution 
@@ -145,20 +162,10 @@ def AEC(AEC_band_name, AEC_band_6S, wl, AOT, metadata, config, anci, mask_cloud,
         # place RC_water_smooth in R_correction_original_shape where there's water
         R_correction_original_shape = np.where(mask_all[str(res_band) + 'm'], R_correction_original_shape, RC_water_smooth)
         del RC_water, RC_water_fill_nan, RC_water_smooth
-    # remove AE from TOA reflectance 
-    temp_SR = image - R_correction_original_shape - R_atm
+    # add AE from TOA reflectance 
+    temp_SR = image + R_correction_original_shape #+ R_atm
     
-    # Correcting for non-linearity of the ratio of environmental irradiance to surface reflectance for homogeneous Lambertian surfaces
-    # This is implemented for water only
-    # Input has to include land, because the function uses the env irradiance of the average reflectance across the scene
-    print("\nIrradiance correction: ")
-    temp_SR_water = tmart.AEC.irradiance_correction(image = temp_SR, wl_RC = wl/1000, band = AEC_band_6S,
-                                                    tm_vza = metadata['vza'], tm_vaa = metadata['vaa'], 
-                                                    tm_sza = metadata['sza'], tm_saa = metadata['saa'],
-                                                    atm_profile = anci, 
-                                                    aerosol_type = anci['r_maritime'], aot550 = AOT)
-    
-    del image, image_AEC, image_R_surf, R_correction_original_shape
+    del image, image_R_surf, R_correction_original_shape
     gc.collect()
     # If land correction is needed 
     if hp_AE_land:
@@ -184,7 +191,7 @@ def AEC(AEC_band_name, AEC_band_6S, wl, AOT, metadata, config, anci, mask_cloud,
         # Negative to 0
         # temp_SR_water[temp_SR_water<0] = 0
         
-        temp_out = temp_SR_water + R_atm # TOA reflectance
+        temp_out = temp_SR + R_atm # TOA reflectance
         temp_mask = mask_all[str(res_band) + 'm']
         
         # back to original dimension 
@@ -212,6 +219,6 @@ def AEC(AEC_band_name, AEC_band_6S, wl, AOT, metadata, config, anci, mask_cloud,
     band_ds.write(temp_out, 1)
     band_ds.close()
     
-    del band_ds, is_nan, temp_SR, temp_SR_water, temp_is_nan, temp_out
+    del band_ds, is_nan, temp_SR, temp_is_nan, temp_out
     gc.collect()
     print(gc.garbage)

@@ -15,7 +15,7 @@ from Py6S import *
 def irradiance_correction(image, wl_RC, band = None,
                           tm_vza = 0, tm_vaa = 0, tm_sza = 0, tm_saa = 0, 
                           atm_profile = None, 
-                          aerosol_type = 'Maritime', aot550 = 0):
+                          aerosol_type = 'Maritime', aot550 = 0, inv= False):
     
     import numpy as np
     import sys
@@ -77,6 +77,8 @@ def irradiance_correction(image, wl_RC, band = None,
     array_R_dir = np.array(list_R_dir)
     array_SR = np.array(list_SR)
     array_ratio = array_R_dir / array_SR
+    if inv: # for debugging, the inverse of the ratio is used to check if the correction is applied in the right direction (brighter pixels should have smaller correction) 
+        array_ratio = array_SR / array_R_dir
     fit_ratio_SR = np.polyfit(array_SR , array_ratio, 2)
     p = np.poly1d(fit_ratio_SR)
     median_ratio = p(median_image)

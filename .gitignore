@@ -1,6 +1,7 @@
 # ignore
 .env
 data/
+test_image.py
 .DS_Store
 *.DS_Store
 _build/.DS_Store
@@ -16,3 +17,6 @@ __pycache__/
 *.xlsx
 tmart/__pycache__/
 readme.docx
+data2/
+tmart.code-workspace
+JOURNAL.md

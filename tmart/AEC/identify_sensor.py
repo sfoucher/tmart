@@ -18,7 +18,7 @@ def identify_sensor(file):
         base_name = os.path.basename(file)
         
         # remove AEC_ if exists 
-        if base_name[0:4] == 'AEC_':
+        if base_name[0:4] == 'AEC_' or base_name[0:4] == 'AEA_':
             base_name = base_name[4:]
 
         # if with 'SAFE': S2

@@ -109,13 +109,25 @@ def read_metadata_S2(file,config,sensor):
                 metadata['lat'] = d[0]
                 metadata['lon'] = d[1]
                 
-                # band files 
-                image_files = os.listdir(metadata['granule'])
-                for image in image_files: 
+                # band files (L1C: files directly in IMG_DATA; L2A: files in R10m/R20m/R60m subdirs)
+                img_dir = metadata['granule']
+                all_images = []
+                for item in os.listdir(img_dir):
+                    item_path = img_dir + item
+                    if os.path.isdir(item_path):
+                        for sub in os.listdir(item_path):
+                            all_images.append((sub, item_path + '/'))
+                    else:
+                        all_images.append((item, img_dir))
+                for image, idir in all_images:
                     if image[0]=='.':continue
                     if image[-4:]=='.xml':continue
                     tmp = image.split('_')
-                    metadata[tmp[-1][0:3]] = '{}/{}/{}/IMG_DATA/{}'.format(file,fname,granule,image)
+                    key = tmp[-1].split('.')[0]  # strip extension from last token
+                    if not key.startswith('B'):  # L2A: last token is resolution e.g. '10m'
+                        key = tmp[-2]
+                    if key not in metadata or 'R10m' in idir:
+                        metadata[key] = idir + image
                 
                 # read scene metadata  
                 path = '{}/{}/{}/'.format(file,fname,granule)

@@ -9,7 +9,7 @@
 
 # Overall control of AEC
 
-def run(file, username=None, password=None, overwrite=False, AOT='MERRA2', n_photon=100_000, AOT_offset=0.0, n_jobs=100, mask_SWIR_threshold=None, atm_info_file=None):
+def run(file, username=None, password=None, overwrite=False, AOT='MERRA2', n_photon=100_000, AOT_offset=0.0, n_jobs=100, mask_SWIR_threshold=None, atm_info_file=None, bAEC= True):
     '''Run adjacency-effect correction on satellite files. See 'Introduction - Adjacency-Effect Correction' for detailed instructions.
     
     Arguments:
@@ -52,7 +52,12 @@ def run(file, username=None, password=None, overwrite=False, AOT='MERRA2', n_pho
     
     # If not overwrite, make a copy of the file(s) in the same directory  
     if not overwrite:
-        basename_new = 'AEC_' + basename
+        if bAEC:
+            print('\nOverwrite is set to False, a copy of the original file will be made for AEC, and the original file will be left unchanged. ')
+            basename_new = 'AEC_' + basename
+        else:
+            print('\nOverwrite is set to False, a copy of the original file will be made for AEA, and the original file will be left unchanged. ')
+            basename_new = 'AEA_' + basename
         file_new = os.path.join(home_folder,basename_new)
         if os.path.exists(file_new):
             print('\nNew directory ' + str(file_new) + ' already exists, proceeds to AEC. \n')
@@ -102,7 +107,7 @@ def run(file, username=None, password=None, overwrite=False, AOT='MERRA2', n_pho
     
     # S2/L89
     if file_is_dir: 
-        tmart_out = tmart.AEC.run_regular(file, username, password, AOT, AOT_offset, n_photon, AEC_record, basename_before_period, n_jobs, mask_SWIR_threshold, atm_info_file=atm_info_file)
+        tmart_out = tmart.AEC.run_regular(file, username, password, AOT, AOT_offset, n_photon, AEC_record, basename_before_period, n_jobs, mask_SWIR_threshold, atm_info_file=atm_info_file, bAEC=bAEC)
     # ACOLITE L1R 
     else:
         tmart_out = tmart.AEC.run_acoliteL1R(file, username, password, AOT, AOT_offset, n_photon, AEC_record, basename_before_period, n_jobs, atm_info_file=atm_info_file)
